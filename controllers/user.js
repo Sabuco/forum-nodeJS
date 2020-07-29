@@ -150,6 +150,13 @@ var controller = {
         });
 
         
+    },
+
+    update: function(req, res) {
+        //Crear middleware para comprobar el token y ponerlo en la ruta
+        return res.status(200).send({
+            message: "Metodo de actualización de datos de user"
+        });
     }
 };
 
