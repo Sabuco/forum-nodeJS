@@ -23,11 +23,17 @@ var controller = {
         //Recoger los parametros de la petición
         var params = req.body;
 
-        //Validar los datos
-        var validate_name = !validator.isEmpty(params.name);
-        var validate_surname = !validator.isEmpty(params.surname);
-        var validate_email = !validator.isEmpty(params.email) && validator.isEmail(params.email);
-        var validate_password = !validator.isEmpty(params.password);
+        try {
+            //Validar los datos
+            var validate_name = !validator.isEmpty(params.name);
+            var validate_surname = !validator.isEmpty(params.surname);
+            var validate_email = !validator.isEmpty(params.email) && validator.isEmail(params.email);
+            var validate_password = !validator.isEmpty(params.password);
+        } catch(err) {
+            return res.status(200).send({
+                message: "Faltan datos por enviar"
+            });
+        }
 
         if(validate_name && validate_surname && validate_email && validate_password){
             //Crear objeto de usuario
@@ -92,9 +98,15 @@ var controller = {
         //Recoger parametros de la peticion
         var params = req.body;
 
-        //Validar los datos
-        var validate_email = !validator.isEmpty(params.email) && validator.isEmail(params.email);
-        var validate_password = !validator.isEmpty(params.password);
+        try {
+            //Validar los datos
+            var validate_email = !validator.isEmpty(params.email) && validator.isEmail(params.email);
+            var validate_password = !validator.isEmpty(params.password);
+        } catch(err) {
+            return res.status(200).send({
+                message: "Faltan datos por enviar"
+            });
+        }
 
         if(!validate_email || !validate_password) {
             return res.status(400).send({
@@ -153,10 +165,69 @@ var controller = {
     },
 
     update: function(req, res) {
-        //Crear middleware para comprobar el token y ponerlo en la ruta
-        return res.status(200).send({
-            message: "Metodo de actualización de datos de user"
-        });
+        //Recoger datos del usuario
+        var params = req.body;
+
+        try{
+            //Validar los datos
+            var validate_name = !validator.isEmpty(params.name);
+            var validate_surname = !validator.isEmpty(params.surname);
+            var validate_email = !validator.isEmpty(params.email) && validator.isEmail(params.email);
+            var validate_password = !validator.isEmpty(params.password);
+        } catch(err) {
+            return res.status(200).send({
+                message: "Faltan datos por enviar"
+            });
+        }
+
+
+        //Eliminar propiedades innecesarias
+        delete params.password;
+
+        var userId = req.user.sub;
+        
+        if(req.user.email != params.email) {
+            User.findOne({email: params.email.toLowerCase()}, (err, user) => {
+                //Si lo encuentra,
+                if(err) {
+                    return res.status(500).send({
+                        message: 'Error al intentar identificarse'
+                    });
+                }
+    
+                if(user && user.email == params.email) {
+                    return res.status(200).send({
+                        message: 'El email no puede ser modificado'
+                    });
+                }
+            });
+        } else {
+
+            //Buscar y actualizar documento
+            User.findOneAndUpdate({_id: userId}, params, {new:true}, (err, userUpdated) => {
+
+                if(err) {
+                    return res.status(500).send({
+                        status: 'error',
+                        message: 'Error al actualizar usuario'
+                    });
+                }
+
+                if (!userUpdated) {
+                    return res.status(200).send({
+                        status: 'error',
+                        message: 'No se ha actualizado el usuario'
+                    });
+                }
+
+                //Devolver respuesta
+                return res.status(200).send({
+                    status: 'success',
+                    user: userUpdated
+                });
+            });
+
+        }
     }
 };
 
