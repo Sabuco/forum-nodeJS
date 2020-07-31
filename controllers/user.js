@@ -4,6 +4,8 @@ var validator = require('validator');
 var bcrypt = require('bcrypt-nodejs');
 var User = require('../models/user');
 var jwt = require('../services/jwt');
+var fs = require('fs');
+var path = require('path');
 
 var controller = {
 
@@ -227,6 +229,61 @@ var controller = {
                 });
             });
 
+        }
+    },
+
+    uploadAvatar: function(req, res) {
+        //Recoger el fichero de la petición
+        var fileName = 'Avatar no subido...';
+
+        if(!req.files) {
+            return res.status(404).send({
+                status: 'error',
+                message: fileName
+            });
+        }
+
+        //Conseguir el nombre y la extension del archivo
+        var filePath = req.files.file0.path;
+        var fileSplit = filePath.split('\\');
+
+        //Nombre del archivo
+        var fileName = fileSplit[2];
+
+        //Extension del archivo
+        var extSplit = fileName.split('\.');
+        var fileExt = extSplit[1];
+
+        //Comprobar la extensión (solo imagenes), si no es valida borrar el fichero subido
+        if(fileExt != 'png' && fileExt != 'jpg' && fileExt != 'jpeg' && fileExt != 'gif') {
+            fs.unlink(filePath, () => {
+                return res.status(500).send({
+                    status: 'error',
+                    message: 'La extension del archivo no es válida',
+                    file: fileSplit
+                });
+            });
+        } else {
+            //Sacar el id del usuario identificado
+            var userId = req.user.sub;
+
+            //Buscar documento bd
+            User.findOneAndUpdate({_id: userId}, {image: file_name}, {new:true}, 
+                (err, userUpdated) => {
+                    if(err) {
+                        return res.status(500).send({
+                            status: 'error',
+                            message: 'Error al guardar el usuario'
+                        });
+                    }
+                    //Devolver respuesta
+                    return res.status(200).send({
+                        status: 'success',
+                        user: userUpdated
+                    });
+            });
+
+            
         }
     }
 };
