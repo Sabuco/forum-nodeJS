@@ -268,7 +268,7 @@ var controller = {
             var userId = req.user.sub;
 
             //Buscar documento bd
-            User.findOneAndUpdate({_id: userId}, {image: file_name}, {new:true}, 
+            User.findOneAndUpdate({_id: userId}, {image: fileName}, {new:true}, 
                 (err, userUpdated) => {
                     if(err) {
                         return res.status(500).send({
@@ -285,6 +285,55 @@ var controller = {
 
             
         }
+    },
+
+    avatar: function(req, res) {
+        var fileName = req.params.fileName; 
+        var pathFile = './uploads/users/' + fileName;
+
+        fs.exists(pathFile, (exists) => {
+            if(exists) {
+                return res.sendFile(path.resolve(pathFile));
+            } else {
+                return res.status(404).send({
+                    message: 'La image no existe'
+                });
+            }
+        });
+    },
+
+    getUsers: function(req, res) {
+        User.find().exec((err, users) => {
+            if(err || !users) {
+                return res.status(404).send({
+                    status: 'error',
+                    message: 'No hay usuarios que mostrar'
+                });
+            }
+
+            return res.status(200).send({
+                status: 'success',
+                users
+            });
+        });
+    },
+
+    getUser: function(req, res) {
+        var userId = req.params.userId;
+
+        User.findById(userId).exec((err, user) => {
+            if(err || !user) {
+                return res.status(404).send({
+                    status: 'error',
+                    message: 'No existe el usuario'
+                });
+            }
+
+            return res.status(200).send({
+                status: 'success',
+                user
+            });
+        });
     }
 };
 
