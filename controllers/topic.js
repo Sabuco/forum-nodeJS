@@ -180,9 +180,94 @@ var controller = {
                     topic
                 });
              });
+    },
 
-        
-    }
+    update: function(req, res) {
+        //Recoger el id del topic de la url
+        var topicId = req.params.id;
+
+        //Recoger los datos que llegan desde post
+        var params = req.body;
+
+        //Validar datos
+        try {
+            var validateTitle = !validator.isEmpty(params.title);
+            var validateContent = !validator.isEmpty(params.content);
+            var validateLang = !validator.isEmpty(params.lang);
+        } catch(err){
+            return res.status(200).send({
+                message: 'Faltan datos por enviar'
+            });
+        }
+
+        if(validateTitle && validateContent && validateLang) {
+            //Montar un json con los datos modificables
+            var update = {
+                title: params.title,
+                content: params.content,
+                code: params.code,
+                lang: params.lang
+            }
+
+            //Find and update del topic por id y por id de usuario
+            Topic.findOneAndUpdate({_id: topicId, user: req.user.sub}, update, {new:true}, (err, topicUpdate) => {
+                if(err){
+                    return res.status(500).send({
+                        status: 'error',
+                        message: 'Error en la petición'
+                    });
+                }
+
+                if(!topicUpdate) {
+                    return res.status(404).send({
+                        status: 'error',
+                        message: 'No se ha actualizado el tema'
+                    });
+                }
+
+                //Devolver respuesta
+                return res.status(200).send({
+                    status: 'success',
+                    topic: topicUpdate
+                });
+            });
+
+            
+        } else {
+            return res.status(500).send({
+                status: 'error',
+                message: 'La validación de los datos no es correcta'
+            });
+        }
+    },
+
+    delete: function(req, res) {
+        //Sacar el id del topic de la URL
+        var topicId = req.params.id;
+
+        //Find and delte por topicId u por userId
+        Topic.findOneAndDelete({_id: topicId, user: req.user.sub}, (err, topicRemoved) => {
+            if(err){
+                return res.status(500).send({
+                    status: 'error',
+                    message: 'Error en la petición'
+                });
+            }
+
+            if(!topicRemoved) {
+                return res.status(404).send({
+                    status: 'error',
+                    message: 'No se ha borrado el tema'
+                });
+            }
+
+            //Devolver una respuesta
+            return res.status(200).send({
+                status: 'success',
+                topic: topicRemoved
+            });
+        });
+    } 
 };
 
 module.exports = controller;
