@@ -75,15 +75,111 @@ var controller = {
     },
 
     update: function(req, res) {
-        return res.status(200).send({
-            message: 'Metodo de updatear comentario'
-        });
+        //Conseguir el id del comentario que llega de la url
+        var commentId = req.params.commentId;
+
+        //Recoger datos y validar
+        var params = req.body;
+
+        try {
+            var validateContent = !validator.isEmpty(params.content);
+        } catch(err){
+            return res.status(200).send({
+                message: 'No has comentado nada'
+            });
+        }
+
+        if(validateContent) {
+            //Find and update de subdocumento
+            Topic.findOneAndUpdate(
+                { "comments._id": commentId },
+                {
+                    "$set": {
+                        "comments.$.content": params.content
+                    }
+                },
+                { new: true },
+                (err, topicUpdated) => {
+                    if(err) {
+                        return res.status(500).send({
+                            status: 'error',
+                            message: 'Error en la petición'
+                        });
+                    }
+        
+                    if(!topicUpdated) {
+                        return res.status(404).send({
+                            status: 'error',
+                            message: 'No existe el tema'
+                        });
+                    }
+
+                    //Devolver los datos
+                    return res.status(200).send({
+                        status: 'success',
+                        topic: topicUpdated
+                    });
+                }
+            );
+
+            
+        }
+
+        
     },
 
     delete: function(req, res) {
-        return res.status(200).send({
-            message: 'Metodo de borrar comentario'
+        //Sacar el id del topic y del comentario a borrar
+        var topicId = req.params.topicId;
+        var commentId = req.params.commentId;
+
+        //Buscar el topic
+        Topic.findById(topicId, (err, topic) => {
+            if(err) {
+                return res.status(500).send({
+                    status: 'error',
+                    message: 'Error en la petición'
+                });
+            }
+
+            if(!topic) {
+                return res.status(404).send({
+                    status: 'error',
+                    message: 'No existe el tema'
+                });
+            }
+
+            //Seleccionar el subdocumento (comentario)
+            var comment = topic.comments.id(commentId);
+
+            //Borrar el comentario
+            if(comment) {
+                comment.remove();
+                
+                //Guardar el topic
+                topic.save((err) => {
+                    if(err) {
+                        return res.status(500).send({
+                            status: 'error',
+                            message: 'Error en la petición'
+                        });
+                    }
+
+                    //Devolver un resultado
+                    return res.status(200).send({
+                        status: 'success',
+                        topic
+                    });
+                })
+            } else {
+                return res.status(404).send({
+                    status: 'error',
+                    message: 'No existe el comentario'
+                });
+            }
         });
+
+        
     }
 };
 
