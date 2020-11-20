@@ -267,7 +267,45 @@ var controller = {
                 topic: topicRemoved
             });
         });
-    } 
+    },
+    
+    search: function(req, res) {
+        //Sacar string a buscar
+        var searchString = req.params.search;
+
+        //Find con OR
+        Topic.find({ "$or": [
+            { "title": { "$regex": searchString, "$options": "i"} },
+            { "content": { "$regex": searchString, "$options": "i"} },
+            { "code": { "$regex": searchString, "$options": "i"} },
+            { "lang": { "$regex": searchString, "$options": "i"} }
+        ]})
+        .sort([['date', 'descending']])
+        .exec((err, topic) => {
+            if (err) {
+                return res.status(500).send({
+                    status: 'error',
+                    message: "Error en la petición"
+                });
+            }
+
+            if (!topics) {
+                return res.status(404).send({
+                    status: 'error',
+                    message: "No hay temas disponibles"
+                });
+            }
+
+            return res.status(200).send({
+                status: 'success',
+                topic
+            });
+        });
+
+        return res.status(200).send({
+            message: "Acción de busqueda"
+        });
+    }
 };
 
 module.exports = controller;
