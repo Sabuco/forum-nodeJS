@@ -54,11 +54,32 @@ var controller = {
                                 message: 'Error al guardar el comentario'
                             });
                         }
-                        //Devolver respuesta
-                        return res.status(200).send({
-                            status: 'success',
-                            topic
-                        });
+
+                        Topic.findById(topic._id)
+                            .populate('user')
+                            .populate('comments.user')
+                            .exec((err, topic) => {
+
+                                if(err){
+                                    return res.status(500).send({
+                                        status: 'error',
+                                        message: 'Error en la petición'
+                                    });
+                                }
+
+                                if(!topic){
+                                    return res.status(404).send({
+                                        status: 'error',
+                                        message: 'No existe el tema'
+                                    });
+                                }
+
+                                //Devolver resultado
+                                return res.status(200).send({
+                                    status: 'success',
+                                    topic
+                                });
+                            });
                     });
 
                     
@@ -165,12 +186,33 @@ var controller = {
                         });
                     }
 
-                    //Devolver un resultado
-                    return res.status(200).send({
-                        status: 'success',
-                        topic
+                    //Find por el id del topic
+                    Topic.findById(topicId)
+                      .populate('user')
+                      .populate('comments.user')
+                      .exec((err, topic) => {
+
+                        if(err){
+                            return res.status(500).send({
+                                status: 'error',
+                                message: 'Error en la petición'
+                            });
+                        }
+
+                        if(!topic){
+                            return res.status(404).send({
+                                status: 'error',
+                                message: 'No existe el tema'
+                            });
+                        }
+
+                        //Devolver resultado
+                        return res.status(200).send({
+                            status: 'success',
+                            topic
+                        });
                     });
-                })
+                });
             } else {
                 return res.status(404).send({
                     status: 'error',
