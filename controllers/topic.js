@@ -273,7 +273,6 @@ var controller = {
     search: function(req, res) {
         //Sacar string a buscar
         var searchString = req.params.search;
-
         //Find con OR
         Topic.find({ "$or": [
             { "title": { "$regex": searchString, "$options": "i"} },
@@ -281,8 +280,9 @@ var controller = {
             { "code": { "$regex": searchString, "$options": "i"} },
             { "lang": { "$regex": searchString, "$options": "i"} }
         ]})
+        .populate('user')
         .sort([['date', 'descending']])
-        .exec((err, topic) => {
+        .exec((err, topics) => {
             if (err) {
                 return res.status(500).send({
                     status: 'error',
@@ -299,12 +299,8 @@ var controller = {
 
             return res.status(200).send({
                 status: 'success',
-                topic
+                topics
             });
-        });
-
-        return res.status(200).send({
-            message: "Acción de busqueda"
         });
     }
 };
